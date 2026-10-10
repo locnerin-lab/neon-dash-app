@@ -1,0 +1,156 @@
+<!DOCTYPE html>
+<html lang="vi">
+<head>
+<meta charset="UTF-8">
+<meta name="viewport" content="width=device-width,initial-scale=1,maximum-scale=1,user-scalable=no,viewport-fit=cover">
+<title>NEON DASH: OVERDRIVE</title>
+<meta name="theme-color" content="#08091e">
+<meta name="description" content="NEON DASH: OVERDRIVE - neon arcade platformer.">
+<link rel="icon" type="image/png" sizes="192x192" href="./icon-192.png">
+<link rel="apple-touch-icon" sizes="180x180" href="./icon-180.png">
+<link rel="manifest" href="./manifest.webmanifest">
+<meta name="apple-mobile-web-app-capable" content="yes">
+<meta name="apple-mobile-web-app-status-bar-style" content="black-translucent">
+<meta name="apple-mobile-web-app-title" content="NEON DASH">
+
+<style>
+*{box-sizing:border-box}html,body{margin:0;padding:0;width:100%;height:100%;height:100dvh;min-height:100%;overflow:hidden;background:#070817;color:white;font-family:Arial,sans-serif;touch-action:none;overscroll-behavior:none}body{position:fixed;inset:0;width:100vw;height:100vh;height:100dvh}canvas{position:absolute;inset:0;width:100vw;height:100vh;height:100dvh;display:block;touch-action:none}button{color:white;border:1px solid #78f6ff;background:linear-gradient(110deg,#087cae,#6723b9);padding:12px 15px;border-radius:11px;font-size:13px;font-weight:bold;cursor:pointer;touch-action:manipulation}button:active{transform:scale(.97)}button:disabled{opacity:.4}#hud{position:fixed;z-index:3;top:calc(8px + env(safe-area-inset-top));left:0;width:100%;text-align:center;pointer-events:none;text-shadow:0 0 12px #00eaff;font-weight:900;letter-spacing:2px;font-size:clamp(15px,3vw,24px)}#sub{font-size:10px;letter-spacing:1px;color:#a6faff;margin-top:5px}#music,#fullscreen{position:fixed;z-index:5;right:8px;top:calc(8px + env(safe-area-inset-top));font-size:10px;padding:8px 9px}#music{right:8px}#fullscreen{right:94px}#stats{position:fixed;z-index:3;top:calc(58px + env(safe-area-inset-top));left:10px;right:10px;display:flex;gap:7px;flex-wrap:wrap;pointer-events:none}.pill{font-size:10px;border:1px solid #56eaff88;background:#080d2dcc;border-radius:18px;padding:7px 9px}#controls{position:fixed;z-index:3;bottom:calc(12px + env(safe-area-inset-bottom));left:10px;right:10px;display:flex;justify-content:space-between;gap:8px;pointer-events:none}#overlay{position:fixed;z-index:10;inset:0;width:100vw;height:100vh;height:100dvh;display:flex;align-items:center;justify-content:center;background:#040514c9;padding:calc(12px + env(safe-area-inset-top)) 12px calc(12px + env(safe-area-inset-bottom));overflow:auto;overscroll-behavior:contain}.panel{width:min(440px,96vw);max-height:calc(100dvh - 24px - env(safe-area-inset-top) - env(safe-area-inset-bottom));overflow:auto;padding:clamp(14px,3vh,23px) 16px;border:1px solid #4eeaff;border-radius:18px;background:linear-gradient(145deg,#111b3cf5,#260d3bf5);text-align:center;box-shadow:0 0 34px #00dfff30}h1{font-size:clamp(22px,6vw,35px);margin:0 0 8px;color:#a0faff;text-shadow:0 0 17px #00dfff}p{font-size:12px;line-height:1.6;color:#d8eaff}.actions{display:flex;gap:8px;justify-content:center;flex-wrap:wrap;margin-top:12px}#extra{margin-top:13px;display:grid;grid-template-columns:repeat(2,minmax(0,1fr));gap:8px}#extra button{min-width:0;overflow-wrap:anywhere}.small{font-size:10px;color:#b9dfff}.hidden{display:none!important}@media(max-height:440px){#hud{top:4px;font-size:15px}#sub{font-size:8px;margin-top:2px}#stats{top:38px;left:6px}#controls{bottom:calc(5px + env(safe-area-inset-bottom));left:6px;right:6px}.pill{font-size:9px;padding:5px 7px}#music,#fullscreen{top:calc(4px + env(safe-area-inset-top));padding:6px;font-size:9px}.panel{padding:10px 14px;max-height:calc(100dvh - 12px - env(safe-area-inset-top) - env(safe-area-inset-bottom))}h1{font-size:22px}p{font-size:11px;margin:6px 0}.actions{margin-top:7px}#extra{margin-top:7px}}
+</style>
+</head>
+<body>
+<canvas id="game"></canvas>
+<div id="hud">NEON DASH: OVERDRIVE<div id="sub">2.3 • AUTO SAVE + FULLSCREEN</div></div>
+<button id="fullscreen">⛶ FULL</button>
+<button id="music">♫ MUSIC ON</button>
+<div id="stats"><span class="pill" id="coinHud">🪙 0</span><span class="pill" id="levelHud">LEVEL 1</span><span class="pill" id="progressHud">0%</span></div>
+<div id="controls"><span class="pill">HOLD: JUMP / FLY / DODGE</span><span class="pill" id="attemptHud">ATTEMPT 1</span></div>
+<div id="overlay"><div class="panel"><h1 id="title">NEON OVERDRIVE 2.2</h1><p id="message">Chạm hoặc nhấn Space để nhảy.<br>Giữ để tự nhảy hoặc điều khiển tàu.<br>Trong boss battle, giữ để nhảy né đạn.<br>Thu thập coin, mở khóa skin và đánh bại boss cuối màn.</p><div class="actions"><button id="play">▶ NEW GAME</button><button id="continueBtn" class="hidden">▶ CONTINUE</button><button id="levelsBtn">LEVELS</button><button id="skinsBtn">SKINS</button></div><div id="extra"></div><p class="small" id="menuInfo">NORMAL MODE • 3 LEVELS • BOSS BATTLE</p></div></div>
+<script>
+(()=>{
+"use strict";
+const canvas=document.getElementById("game"),ctx=canvas.getContext("2d"),$=id=>document.getElementById(id);
+const overlay=$("overlay"),titleEl=$("title"),messageEl=$("message"),playBtn=$("play"),extra=$("extra"),sub=$("sub");
+let W=window.visualViewport?window.visualViewport.width:innerWidth,H=window.visualViewport?window.visualViewport.height:innerHeight,DPR=1,groundY=H-75,player=null;
+const PLAYER_SIZE=27,GRAVITY=1700,JUMP_POWER=560,LEVEL_LENGTH=6500;
+function resize(){
+ const vv=window.visualViewport;
+ W=Math.max(1,Math.round(vv?vv.width:document.documentElement.clientWidth||innerWidth));
+ H=Math.max(1,Math.round(vv?vv.height:document.documentElement.clientHeight||innerHeight));
+ DPR=Math.min(window.devicePixelRatio||1,2);
+ canvas.width=Math.round(W*DPR);canvas.height=Math.round(H*DPR);
+ canvas.style.width=W+"px";canvas.style.height=H+"px";
+ ctx.setTransform(DPR,0,0,DPR,0,0);groundY=H-75;
+ if(player){player.y=Math.min(player.y,groundY-PLAYER_SIZE);if(player.y+PLAYER_SIZE>=groundY){player.y=groundY-PLAYER_SIZE;player.vy=0;player.onGround=true}}
+ if(state!=="playing"&&player)draw();
+}
+addEventListener("resize",resize);addEventListener("orientationchange",()=>setTimeout(resize,150));
+if(window.visualViewport){window.visualViewport.addEventListener("resize",resize);window.visualViewport.addEventListener("scroll",resize)}
+const LEVELS=[{name:"NEON CITY",bg:["#08091e","#151044"],ground:"#00eaff",spike:"#ff42cb",theme:"#08eaff",speed:350},{name:"CYBER GRID",bg:["#071b19","#092f36"],ground:"#4dffe0",spike:"#ffb13b",theme:"#4dffe0",speed:365},{name:"VOID CORE",bg:["#190820","#390c35"],ground:"#ff53d9",spike:"#ff4a68",theme:"#ff53d9",speed:380}];
+const SKINS=[{name:"Default",cost:0,color:"#00eaff",trail:"#8fffff"},{name:"Plasma",cost:35,color:"#ff42d6",trail:"#ffa0f0"},{name:"Toxic",cost:60,color:"#72ff53",trail:"#d3ff8a"},{name:"Solar",cost:90,color:"#ffb438",trail:"#fff0a1"},{name:"Void",cost:130,color:"#a46aff",trail:"#d8b5ff"},{name:"Glacier",cost:180,color:"#ffffff",trail:"#70cfff"}];
+function loadData(){try{const d=JSON.parse(localStorage.getItem("neonOverdriveSave")||"{}");return{coins:Math.max(0,Number(d.coins)||0),unlocked:Math.max(1,Math.min(3,Number(d.unlocked)||1)),owned:Array.isArray(d.owned)?[...new Set([0,...d.owned.filter(n=>Number.isInteger(n)&&n>=0&&n<SKINS.length)])]:[0],skin:Number.isInteger(d.skin)?Math.max(0,Math.min(SKINS.length-1,d.skin)):0}}catch(e){return{coins:0,unlocked:1,owned:[0],skin:0}}}
+let save=loadData();if(!save.owned.includes(save.skin))save.skin=0;
+let selectedLevel=0,state="menu",mode="cube",holding=false,distance=0,speed=350,attempt=1;
+let obstacles=[],portals=[],coins=[],particles=[],shots=[],bossBullets=[],boss=null,fireTimer=.25,bossFireTimer=1.1,raf=0,lastTime=0,audioCtx=null,musicOn=true,musicTimer=null,musicStep=0,trailTimer=0,screenFlash=0,autosaveClock=0;
+const RUN_SAVE_KEY="neonOverdriveRunSave_v1";
+const continueBtn=$("continueBtn");
+function persist(){try{localStorage.setItem("neonOverdriveSave",JSON.stringify(save))}catch(e){}updateHUD()}
+function updateHUD(){$("coinHud").textContent="🪙 "+save.coins;$("levelHud").textContent="LEVEL "+(selectedLevel+1);$("attemptHud").textContent="ATTEMPT "+attempt;$("progressHud").textContent=state==="playing"&&boss&&boss.active?"BOSS "+Math.max(0,boss.hp)+"/"+boss.maxHp:Math.floor(Math.min(1,distance/LEVEL_LENGTH)*100)+"%"}
+function rand(a,b){return a+Math.random()*(b-a)}function playerX(){return Math.min(150,W*.25)}function currentLevel(){return LEVELS[selectedLevel]}function currentSkin(){return SKINS[save.skin]||SKINS[0]}
+function makeCourse(){obstacles=[];portals=[];coins=[];particles=[];shots=[];bossBullets=[];const len=LEVEL_LENGTH;portals=[{world:1150,to:"ship",used:false},{world:2400,to:"cube",used:false},{world:3550,to:"ship",used:false},{world:4750,to:"cube",used:false}];let x=470;while(x<len-900){if(portals.some(p=>Math.abs(p.world-x)<185)){x+=rand(100,140);continue}const shipZone=(x>1150&&x<2400)||(x>3550&&x<4750);if(shipZone){if(Math.random()<.68)obstacles.push({type:"block",world:x,yOffset:rand(90,190),w:rand(34,52),h:rand(32,65)});x+=rand(240,360)}else{const r=Math.random(),count=r<.42?1:r<.78?2:3;obstacles.push({type:"spikes",world:x,count,w:28});x+=count*28+rand(190,315)}}for(let cx=260;cx<len-900;cx+=rand(190,310)){if(portals.some(p=>Math.abs(p.world-cx)<90))continue;const shipZone=(cx>1150&&cx<2400)||(cx>3550&&cx<4750);coins.push({world:cx,y:shipZone?rand(groundY-230,groundY-100):groundY-rand(65,145),got:false})}boss={active:false,hp:8,maxHp:8,x:0,y:0,phase:0};fireTimer=.25;bossFireTimer=1.1}
+function resetGame(){distance=0;mode="cube";holding=false;speed=currentLevel().speed;player={y:groundY-PLAYER_SIZE,vy:0,onGround:true,rotation:0};makeCourse();trailTimer=0;screenFlash=0;autosaveClock=0;sub.textContent=currentLevel().name+" • NORMAL";updateHUD()}
+function hasSavedRun(){try{return !!localStorage.getItem(RUN_SAVE_KEY)}catch(e){return false}}
+function clearRunSave(){try{localStorage.removeItem(RUN_SAVE_KEY)}catch(e){}continueBtn.classList.add("hidden")}
+function saveRun(){
+ if(state!=="playing"||!player||!boss)return;
+ const data={version:1,selectedLevel,attempt,distance,speed,mode,player:{y:player.y,vy:player.vy,onGround:player.onGround,rotation:player.rotation},obstacles,portals,coins,boss,fireTimer,bossFireTimer,shots,bossBullets};
+ try{localStorage.setItem(RUN_SAVE_KEY,JSON.stringify(data));continueBtn.classList.remove("hidden")}catch(e){/* Browser storage may be disabled or full. */}
+}
+function restoreRun(){
+ try{
+  const raw=localStorage.getItem(RUN_SAVE_KEY);if(!raw)return false;
+  const d=JSON.parse(raw);
+  if(!d||d.version!==1||!Number.isInteger(d.selectedLevel)||d.selectedLevel<0||d.selectedLevel>=LEVELS.length||!d.player||!Array.isArray(d.obstacles)||!Array.isArray(d.portals)||!Array.isArray(d.coins)||!d.boss)return false;
+  selectedLevel=d.selectedLevel;attempt=Math.max(1,Number(d.attempt)||1);distance=Math.max(0,Math.min(LEVEL_LENGTH,Number(d.distance)||0));speed=Math.max(currentLevel().speed,Number(d.speed)||currentLevel().speed);mode=d.mode==="ship"?"ship":"cube";
+  player={y:Number(d.player.y),vy:Number(d.player.vy)||0,onGround:!!d.player.onGround,rotation:Number(d.player.rotation)||0};
+  if(!Number.isFinite(player.y))player.y=groundY-PLAYER_SIZE;player.y=Math.max(0,Math.min(groundY-PLAYER_SIZE,player.y));
+  obstacles=d.obstacles;portals=d.portals;coins=d.coins;boss=d.boss;fireTimer=Number(d.fireTimer)||.25;bossFireTimer=Number(d.bossFireTimer)||1.1;shots=Array.isArray(d.shots)?d.shots:[];bossBullets=Array.isArray(d.bossBullets)?d.bossBullets:[];particles=[];holding=false;trailTimer=0;screenFlash=0;autosaveClock=0;
+  sub.textContent=boss.active?"BOSS BATTLE • DODGE + AUTO FIRE":(mode==="cube"?"CUBE MODE • HOLD TO AUTO-JUMP":"SHIP MODE • HOLD TO FLY");updateHUD();return true;
+ }catch(e){return false}
+}
+function showMenu(title,message){titleEl.textContent=title;messageEl.innerHTML=message;overlay.classList.remove("hidden")}
+function start(resume=false){initAudio();if(resume){if(!restoreRun()){clearRunSave();resetGame()}}else{clearRunSave();resetGame()}state="playing";overlay.classList.add("hidden");cancelAnimationFrame(raf);lastTime=performance.now();raf=requestAnimationFrame(loop)}
+function die(){if(state!=="playing")return;clearRunSave();state="dead";holding=false;attempt++;burst(playerX()+13,player.y+13,currentSkin().color,30);showMenu("CRASH!",'Đụng chướng ngại vật hoặc trúng đạn boss.<br>Coin đã thu thập vẫn được giữ lại.<br><br><b>Level '+(selectedLevel+1)+'</b>');playBtn.textContent="↻ RETRY";extra.innerHTML="";updateHUD()}
+function winGame(){if(state!=="playing")return;clearRunSave();state="won";holding=false;distance=LEVEL_LENGTH;save.unlocked=Math.max(save.unlocked,Math.min(3,selectedLevel+2));const reward=25+selectedLevel*15;save.coins+=reward;persist();burst(W*.5,H*.4,"#fff28a",65);showMenu("🏆 LEVEL COMPLETE!",currentLevel().name+" đã hoàn thành!<br>Thưởng hoàn thành: <b>+"+reward+" coin</b><br>Tiến trình: 100%.<br><br>"+(selectedLevel<2?"Level tiếp theo đã mở khóa!":"Đã hoàn thành toàn bộ các level!"));playBtn.textContent="↻ PLAY AGAIN";extra.innerHTML=""}
+playBtn.addEventListener("click",()=>start(false));
+continueBtn.addEventListener("click",()=>start(true));
+function beginHold(){if(state!=="playing")return;holding=true;if(mode==="cube")jumpOnce()}function endHold(){holding=false}function jumpOnce(){if(state!=="playing"||mode!=="cube"||!player.onGround)return;player.vy=-JUMP_POWER;player.onGround=false;burst(playerX()+13,groundY-2,currentSkin().trail,4)}
+canvas.addEventListener("pointerdown",e=>{e.preventDefault();try{canvas.setPointerCapture(e.pointerId)}catch(_){}beginHold()});canvas.addEventListener("pointerup",endHold);canvas.addEventListener("pointercancel",endHold);canvas.addEventListener("lostpointercapture",endHold);addEventListener("pointerup",endHold);addEventListener("blur",endHold);document.addEventListener("visibilitychange",()=>{if(document.hidden)endHold()});
+addEventListener("keydown",e=>{if(["Space","ArrowUp","KeyW"].includes(e.code)){e.preventDefault();if(!e.repeat)beginHold()}});addEventListener("keyup",e=>{if(["Space","ArrowUp","KeyW"].includes(e.code))endHold()});
+function burst(x,y,color,n){for(let i=0;i<n;i++){const a=rand(0,Math.PI*2),v=rand(45,240);particles.push({x,y,vx:Math.cos(a)*v,vy:Math.sin(a)*v,life:rand(.25,.7),max:.7,size:rand(2,5),color})}}
+function update(dt){if(state!=="playing")return;dt=Math.min(dt,.033);
+ if(!boss.active){distance+=speed*dt;speed=Math.min(currentLevel().speed+65,currentLevel().speed+distance*.006)}else{
+  boss.phase+=dt;boss.x=playerX()+Math.min(W*.56,290);boss.y=Math.max(100,groundY-175+Math.sin(boss.phase*2)*38);fireTimer-=dt;
+  if(fireTimer<=0){shots.push({x:playerX()+PLAYER_SIZE,y:player.y+PLAYER_SIZE/2,vx:560,vy:0,r:4});fireTimer=.38}
+  bossFireTimer-=dt;if(bossFireTimer<=0){const dx=playerX()+12-boss.x,dy=player.y+13-boss.y,mag=Math.max(1,Math.hypot(dx,dy));bossBullets.push({x:boss.x-35,y:boss.y+10,vx:dx/mag*235,vy:dy/mag*235,r:7});if(boss.hp<=4)bossBullets.push({x:boss.x-35,y:boss.y+35,vx:-260,vy:rand(-105,105),r:6});bossFireTimer=boss.hp<=4?.85:1.25}
+  shots.forEach(s=>s.x+=s.vx*dt);for(const s of shots){if(!s.hit&&Math.abs(s.x-boss.x)<48&&Math.abs(s.y-boss.y)<65){s.hit=true;boss.hp--;burst(s.x,s.y,"#fff28a",8);screenFlash=.09;if(boss.hp<=0){winGame();return}}}shots=shots.filter(s=>!s.hit&&s.x<W+50);
+  bossBullets.forEach(b=>{b.x+=b.vx*dt;b.y+=b.vy*dt});for(const b of bossBullets){if(Math.abs(b.x-(playerX()+PLAYER_SIZE/2))<PLAYER_SIZE/2+b.r&&Math.abs(b.y-(player.y+PLAYER_SIZE/2))<PLAYER_SIZE/2+b.r){die();return}}bossBullets=bossBullets.filter(b=>b.x>-30&&b.y>-30&&b.y<H+30)
+ }
+ if(!boss.active&&distance>=LEVEL_LENGTH-1250){boss.active=true;mode="cube";player.y=groundY-PLAYER_SIZE;player.vy=0;player.onGround=true;sub.textContent="BOSS BATTLE • HOLD TO JUMP + DODGE";boss.x=playerX()+Math.min(W*.56,290);boss.y=groundY-175;burst(boss.x,boss.y,"#ff43d6",35)}
+ for(const p of portals){if(!p.used&&distance>=p.world&&!boss.active){p.used=true;mode=p.to;if(mode==="cube"){player.y=Math.min(player.y,groundY-PLAYER_SIZE);player.vy=0;player.onGround=player.y>=groundY-PLAYER_SIZE}sub.textContent=mode==="cube"?"CUBE MODE • HOLD TO AUTO-JUMP":"SHIP MODE • HOLD TO FLY";burst(playerX()+13,player.y+13,currentLevel().theme,20)}}
+ // FIX: player physics always runs, including during boss battle. Boss bullets can now be dodged.
+ if(mode==="cube"){
+  player.vy+=GRAVITY*dt;player.y+=player.vy*dt;
+  if(player.y+PLAYER_SIZE>=groundY){player.y=groundY-PLAYER_SIZE;player.vy=0;player.onGround=true}else player.onGround=false;
+  if(holding&&player.onGround)jumpOnce();
+  if(!player.onGround)player.rotation+=dt*7;else player.rotation=Math.round(player.rotation/(Math.PI/2))*Math.PI/2;
+ }else{
+  player.vy+=(holding?-1250:900)*dt;player.vy=Math.max(-390,Math.min(390,player.vy));player.y+=player.vy*dt;player.y=Math.max(45,Math.min(groundY-PLAYER_SIZE-8,player.y));player.rotation=Math.max(-.65,Math.min(.65,player.vy*.0015));
+ }
+ // Course collision and pickups are disabled only during the boss fight, not player movement.
+ if(!boss.active){const px=playerX()+4,py=player.y+4,pw=PLAYER_SIZE-8,ph=PLAYER_SIZE-8;for(const o of obstacles){const sx=o.world-distance+playerX();if(o.type==="spikes"){if(sx>W+40||sx+o.count*o.w<playerX()-10)continue;for(let i=0;i<o.count;i++){const bx=sx+i*o.w+5,bw=o.w-10,top=groundY-32;if(px<bx+bw&&px+pw>bx&&py+ph>top+7&&py<groundY){die();return}}}else if(mode==="ship"){const top=groundY-o.yOffset-o.h;if(sx<px+pw&&sx+o.w>px&&player.y<top+o.h&&player.y+PLAYER_SIZE>top){die();return}}}for(const c of coins){if(c.got)continue;const cx=c.world-distance+playerX();if(Math.abs(cx-(playerX()+13))<22&&Math.abs(c.y-(player.y+13))<25){c.got=true;save.coins++;persist();burst(cx,c.y,"#ffe879",12)}}}
+ trailTimer-=dt;if(trailTimer<=0){particles.push({x:playerX()+rand(0,PLAYER_SIZE),y:player.y+rand(0,PLAYER_SIZE),vx:rand(-50,-10),vy:rand(-25,25),life:.3,max:.3,size:rand(2,4),color:currentSkin().trail});trailTimer=.035}particles.forEach(p=>{p.x+=p.vx*dt;p.y+=p.vy*dt;p.life-=dt});particles=particles.filter(p=>p.life>0);if(screenFlash>0)screenFlash-=dt;updateHUD();autosaveClock+=dt;if(autosaveClock>=.75){autosaveClock=0;saveRun()}
+}
+function drawBackground(){const lev=currentLevel(),g=ctx.createLinearGradient(0,0,0,H);g.addColorStop(0,lev.bg[0]);g.addColorStop(.65,lev.bg[1]);g.addColorStop(1,"#08091c");ctx.fillStyle=g;ctx.fillRect(0,0,W,H);ctx.strokeStyle=lev.theme+"22";ctx.lineWidth=1;const grid=48,shift=-(distance*.25%grid);for(let x=shift;x<W;x+=grid){ctx.beginPath();ctx.moveTo(x,0);ctx.lineTo(x,H);ctx.stroke()}for(let y=groundY%grid;y<H;y+=grid){ctx.beginPath();ctx.moveTo(0,y);ctx.lineTo(W,y);ctx.stroke()}for(let i=0;i<55;i++){const x=((i*173-distance*.08)%(W+20)+W+20)%(W+20),y=(i*79)%(Math.max(1,groundY-30));ctx.fillStyle=i%3===0?lev.theme:"#ffffff88";ctx.fillRect(x,y,2,2)}ctx.fillStyle="#090d28";ctx.fillRect(0,groundY,W,H-groundY);ctx.strokeStyle=lev.ground;ctx.lineWidth=2;ctx.shadowBlur=14;ctx.shadowColor=lev.ground;ctx.beginPath();ctx.moveTo(0,groundY);ctx.lineTo(W,groundY);ctx.stroke();ctx.shadowBlur=0}
+function drawSpikes(x,count,w){const lev=currentLevel();ctx.save();ctx.shadowColor=lev.spike;ctx.shadowBlur=14;for(let i=0;i<count;i++){const sx=x+i*w;ctx.fillStyle=lev.spike;ctx.strokeStyle="#ffe5fa";ctx.lineWidth=1.3;ctx.beginPath();ctx.moveTo(sx,groundY);ctx.lineTo(sx+w/2,groundY-33);ctx.lineTo(sx+w,groundY);ctx.closePath();ctx.fill();ctx.stroke();ctx.fillStyle="#8419a9";ctx.beginPath();ctx.moveTo(sx+w*.37,groundY-9);ctx.lineTo(sx+w/2,groundY-25);ctx.lineTo(sx+w*.62,groundY-9);ctx.closePath();ctx.fill()}ctx.restore()}
+function draw(){drawBackground();for(const p of portals){if(p.used||boss.active)continue;const x=p.world-distance+playerX();if(x<-60||x>W+60)continue;ctx.save();ctx.translate(x,groundY-72);ctx.shadowBlur=20;ctx.shadowColor=p.to==="ship"?"#ff4be8":currentLevel().theme;ctx.strokeStyle=p.to==="ship"?"#ff4be8":currentLevel().theme;ctx.lineWidth=6;ctx.beginPath();ctx.ellipse(0,0,18,51,0,0,Math.PI*2);ctx.stroke();ctx.lineWidth=2;ctx.beginPath();ctx.ellipse(0,0,10,43,0,0,Math.PI*2);ctx.stroke();ctx.restore()}
+ if(!boss.active){for(const o of obstacles){const x=o.world-distance+playerX();if(x>W+100||x<-200)continue;if(o.type==="spikes")drawSpikes(x,o.count,o.w);else if(mode==="ship"){const y=groundY-o.yOffset-o.h;ctx.save();ctx.shadowColor="#ff4be8";ctx.shadowBlur=13;ctx.fillStyle="#32134d";ctx.strokeStyle="#ff62e9";ctx.lineWidth=2;ctx.fillRect(x,y,o.w,o.h);ctx.strokeRect(x,y,o.w,o.h);ctx.restore()}}for(const c of coins){if(c.got)continue;const x=c.world-distance+playerX();if(x<-30||x>W+30)continue;ctx.save();ctx.translate(x,c.y);ctx.shadowColor="#ffe879";ctx.shadowBlur=17;ctx.fillStyle="#ffdb55";ctx.strokeStyle="#fff4ad";ctx.lineWidth=2;ctx.beginPath();ctx.arc(0,0,8,0,Math.PI*2);ctx.fill();ctx.stroke();ctx.fillStyle="#a86a00";ctx.font="bold 10px Arial";ctx.textAlign="center";ctx.textBaseline="middle";ctx.fillText("$",0,0);ctx.restore()}}else{const x=boss.x,y=boss.y;ctx.save();ctx.translate(x,y);ctx.shadowBlur=28;ctx.shadowColor="#ff31d8";ctx.fillStyle="#35104e";ctx.strokeStyle="#ff59e5";ctx.lineWidth=3;ctx.beginPath();ctx.moveTo(-38,-48);ctx.lineTo(20,-54);ctx.lineTo(46,-22);ctx.lineTo(40,30);ctx.lineTo(0,48);ctx.lineTo(-42,25);ctx.lineTo(-50,-12);ctx.closePath();ctx.fill();ctx.stroke();ctx.fillStyle="#ff40df";ctx.fillRect(-27,-15,15,8);ctx.fillRect(12,-15,15,8);ctx.fillStyle="#a4faff";ctx.fillRect(-18,15,36,5);ctx.restore();const bw=Math.min(220,W*.55),bx=(W-bw)/2,by=83;ctx.fillStyle="#ffffff30";ctx.fillRect(bx,by,bw,9);ctx.fillStyle="#ff37d5";ctx.fillRect(bx,by,bw*Math.max(0,boss.hp/boss.maxHp),9);ctx.font="bold 11px Arial";ctx.textAlign="center";ctx.fillStyle="#ffcafa";ctx.fillText("OVERLORD • "+boss.hp+" HP",W/2,by-7);for(const s of shots){ctx.save();ctx.shadowBlur=14;ctx.shadowColor="#fff28a";ctx.fillStyle="#fff5a6";ctx.beginPath();ctx.arc(s.x,s.y,s.r,0,Math.PI*2);ctx.fill();ctx.restore()}for(const b of bossBullets){ctx.save();ctx.shadowBlur=14;ctx.shadowColor="#ff39d8";ctx.fillStyle="#ff4cda";ctx.beginPath();ctx.arc(b.x,b.y,b.r,0,Math.PI*2);ctx.fill();ctx.restore()}}
+ const skin=currentSkin();ctx.save();ctx.translate(playerX()+PLAYER_SIZE/2,player.y+PLAYER_SIZE/2);ctx.rotate(player.rotation);ctx.shadowBlur=21;ctx.shadowColor=skin.color;if(mode==="cube"){const grad=ctx.createLinearGradient(-14,-14,14,14);grad.addColorStop(0,"#ffffff");grad.addColorStop(.35,skin.color);grad.addColorStop(1,"#654aff");ctx.fillStyle=grad;ctx.strokeStyle="#f1ffff";ctx.lineWidth=2;ctx.fillRect(-PLAYER_SIZE/2,-PLAYER_SIZE/2,PLAYER_SIZE,PLAYER_SIZE);ctx.strokeRect(-PLAYER_SIZE/2,-PLAYER_SIZE/2,PLAYER_SIZE,PLAYER_SIZE);ctx.fillStyle="#101338";ctx.fillRect(-7,-4,4,5);ctx.fillRect(3,-4,4,5);ctx.fillRect(-5,5,10,2)}else{ctx.fillStyle=skin.color;ctx.strokeStyle="#ffe4ff";ctx.lineWidth=2;ctx.beginPath();ctx.moveTo(17,0);ctx.lineTo(-12,-11);ctx.lineTo(-7,0);ctx.lineTo(-12,11);ctx.closePath();ctx.fill();ctx.stroke();if(holding){ctx.fillStyle="#ff9c42";ctx.beginPath();ctx.moveTo(-8,-4);ctx.lineTo(-23,0);ctx.lineTo(-8,4);ctx.fill()}}ctx.restore();for(const p of particles){ctx.globalAlpha=Math.max(0,p.life/Math.max(.01,p.max));ctx.fillStyle=p.color;ctx.shadowBlur=8;ctx.shadowColor=p.color;ctx.fillRect(p.x,p.y,p.size||3,p.size||3)}ctx.globalAlpha=1;ctx.shadowBlur=0;const progress=Math.min(1,distance/LEVEL_LENGTH);ctx.fillStyle="#ffffff25";ctx.fillRect(12,H-10,W-24,3);ctx.fillStyle=currentLevel().theme;ctx.fillRect(12,H-10,(W-24)*progress,3);if(screenFlash>0){ctx.fillStyle="#ffffff";ctx.globalAlpha=Math.min(.35,screenFlash*3);ctx.fillRect(0,0,W,H);ctx.globalAlpha=1}}
+function loop(now){const dt=(now-lastTime)/1000;lastTime=now;update(dt);draw();if(state==="playing")raf=requestAnimationFrame(loop)}
+function renderMenu(){extra.innerHTML="";$("menuInfo").textContent="NORMAL MODE • "+save.unlocked+" LEVEL(S) UNLOCKED • "+save.coins+" COINS"}
+$("levelsBtn").addEventListener("click",()=>{extra.innerHTML="";LEVELS.forEach((l,i)=>{const b=document.createElement("button");b.textContent=(i<save.unlocked?"✓ ":"🔒 ")+(i+1)+". "+l.name;b.disabled=i>=save.unlocked;b.style.borderColor=l.theme;b.addEventListener("click",()=>{selectedLevel=i;updateHUD();renderMenu();showMenu("LEVEL "+(i+1),l.name+"<br>Độ khó: NORMAL<br>Boss cuối màn • Thu thập coin");playBtn.textContent="▶ PLAY"});extra.appendChild(b)})});$("skinsBtn").addEventListener("click",renderSkins);
+function renderSkins(){extra.innerHTML="";SKINS.forEach((s,i)=>{const b=document.createElement("button"),owned=save.owned.includes(i);b.style.borderColor=s.color;b.textContent=(save.skin===i?"✓ ":"")+s.name+" • "+(owned?"OWNED":s.cost+" 🪙");b.addEventListener("click",()=>{if(owned){save.skin=i;persist();renderSkins();return}if(save.coins<s.cost){$("menuInfo").textContent="CẦN "+(s.cost-save.coins)+" COIN NỮA ĐỂ MUA "+s.name;return}save.coins-=s.cost;save.owned.push(i);save.skin=i;persist();renderSkins();$("menuInfo").textContent="ĐÃ MỞ KHÓA SKIN "+s.name+"!"});extra.appendChild(b)})}
+playBtn.addEventListener("click",()=>{if(state!=="playing")start(false)});
+if(hasSavedRun()){continueBtn.classList.remove("hidden");$("menuInfo").textContent="ĐÃ TÌM THẤY TIẾN TRÌNH ĐÃ LƯU • NHẤN CONTINUE ĐỂ CHƠI TIẾP"}else continueBtn.classList.add("hidden");
+renderMenu();if(hasSavedRun())$("menuInfo").textContent="ĐÃ TÌM THẤY TIẾN TRÌNH ĐÃ LƯU • NHẤN CONTINUE ĐỂ CHƠI TIẾP";
+function initAudio(){if(!musicOn||audioCtx)return;try{audioCtx=new(window.AudioContext||window.webkitAudioContext)();audioCtx.resume();musicTimer=setInterval(playBeat,60000/140/2)}catch(e){musicOn=false;$("music").textContent="♫ MUSIC OFF"}}
+function tone(freq,duration,type,volume){if(!audioCtx||!musicOn)return;const osc=audioCtx.createOscillator(),gain=audioCtx.createGain();osc.type=type;osc.frequency.value=freq;gain.gain.setValueAtTime(volume,audioCtx.currentTime);gain.gain.exponentialRampToValueAtTime(.001,audioCtx.currentTime+duration);osc.connect(gain);gain.connect(audioCtx.destination);osc.start();osc.stop(audioCtx.currentTime+duration)}
+function playBeat(){if(!audioCtx||!musicOn||state!=="playing")return;const s=musicStep++%16;if(s%4===0)tone(58,.14,"sine",.2);if(s===4||s===12)tone(150,.07,"triangle",.07);tone([220,277,330,440,330,277,247,330][s%8],.12,"sawtooth",.022)}
+const fullscreenBtn=$("fullscreen");
+function fullscreenActive(){return !!(document.fullscreenElement||document.webkitFullscreenElement)}
+function updateFullscreenLabel(){fullscreenBtn.textContent=fullscreenActive()?"⤢ EXIT":"⛶ FULL"}
+fullscreenBtn.addEventListener("click",async()=>{
+ try{
+  if(fullscreenActive()){
+   if(document.exitFullscreen)await document.exitFullscreen();
+   else if(document.webkitExitFullscreen)document.webkitExitFullscreen();
+  }else{
+   const target=document.documentElement;
+   if(target.requestFullscreen)await target.requestFullscreen();
+   else if(target.webkitRequestFullscreen)target.webkitRequestFullscreen();
+   else if(canvas.webkitEnterFullscreen)canvas.webkitEnterFullscreen();
+   else {alert("Trình duyệt này không cho trang vào toàn màn hình trực tiếp. Hãy mở trang game bằng Open in new tab hoặc nút Fullscreen của trang host.");}
+  }
+ }catch(e){alert("Không thể bật toàn màn hình trong khung nhúng này. Hãy mở game bằng Open in new tab rồi bấm FULL.")}
+ setTimeout(()=>{resize();updateFullscreenLabel()},100);
+});
+document.addEventListener("fullscreenchange",()=>{resize();updateFullscreenLabel()});
+document.addEventListener("webkitfullscreenchange",()=>{resize();updateFullscreenLabel()});
+$("music").addEventListener("click",()=>{musicOn=!musicOn;$("music").textContent=musicOn?"♫ MUSIC ON":"♫ MUSIC OFF";if(musicOn){if(!audioCtx)initAudio();else if(audioCtx.state==="suspended")audioCtx.resume();if(!musicTimer&&audioCtx)musicTimer=setInterval(playBeat,60000/140/2)}else{if(musicTimer)clearInterval(musicTimer);musicTimer=null}});
+addEventListener("pagehide",()=>{if(state==="playing")saveRun()});
+document.addEventListener("visibilitychange",()=>{if(document.hidden&&state==="playing")saveRun()});
+window.addEventListener("beforeunload",()=>{if(state==="playing")saveRun()});
+resize();resetGame();state="menu";draw();updateFullscreenLabel();if(hasSavedRun()){continueBtn.classList.remove("hidden");$("menuInfo").textContent="ĐÃ TÌM THẤY TIẾN TRÌNH ĐÃ LƯU • NHẤN CONTINUE ĐỂ CHƠI TIẾP"}
+})();
+</script>
+</body>
+</html>
